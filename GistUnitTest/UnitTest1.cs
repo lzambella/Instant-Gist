@@ -1,6 +1,6 @@
 ﻿using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-
+using Instant_Gist;
 namespace GistUnitTest
 {
     [TestClass]

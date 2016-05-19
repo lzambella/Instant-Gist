@@ -53,6 +53,12 @@
     <Compile Include="UnitTest1.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Instant Gist\Instant Gist.csproj">
+      <Project>{3dbfb906-baf6-4fa0-9e04-150d7fc0cb42}</Project>
+      <Name>Instant Gist</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
       <ItemGroup>

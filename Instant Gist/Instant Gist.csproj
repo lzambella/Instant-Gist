@@ -53,7 +53,6 @@
   <ItemGroup>
     <Compile Include="GistMenu.cs" />
     <Compile Include="GistMenuPackage.cs" />
-    <Compile Include="GistUploader.cs" />
     <Compile Include="GithubLogin.xaml.cs">
       <DependentUpon>GithubLogin.xaml</DependentUpon>
     </Compile>
@@ -71,12 +70,23 @@
     <VSCTCompile Include="GistMenuPackage.vsct">
       <ResourceName>Menus.ctmenu</ResourceName>
     </VSCTCompile>
+    <Content Include="App_Readme\Spring.Rest.txt" />
+    <Content Include="App_Readme\Spring.Social.Core.txt" />
     <Content Include="index.html" />
     <Content Include="Resources\GistMenu.png" />
     <Content Include="Resources\GistMenuPackage.ico" />
+    <Content Include="Resources\Token.txt" />
     <Content Include="stylesheet.css" />
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="Common.Logging, Version=2.0.0.0, Culture=neutral, PublicKeyToken=af08829b84f0328e, processorArchitecture=MSIL">
+      <HintPath>..\packages\Common.Logging.2.0.0\lib\2.0\Common.Logging.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="CSharp.GitHub, Version=0.1.4500.22863, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\CSharp.GitHub.0.1.4500.22863\lib\net40\CSharp.GitHub.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="EnvDTE, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
       <EmbedInteropTypes>False</EmbedInteropTypes>
     </Reference>
@@ -171,6 +181,14 @@
     </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
+    <Reference Include="Spring.Rest, Version=1.1.0.5340, Culture=neutral, PublicKeyToken=65e474d141e25e07, processorArchitecture=MSIL">
+      <HintPath>..\packages\Spring.Rest.1.1.0\lib\net40\Spring.Rest.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Spring.Social.Core, Version=1.0.0.5340, Culture=neutral, PublicKeyToken=65e474d141e25e07, processorArchitecture=MSIL">
+      <HintPath>..\packages\Spring.Social.Core.1.0.0\lib\net40\Spring.Social.Core.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="stdole, Version=7.0.3300.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
       <EmbedInteropTypes>False</EmbedInteropTypes>
     </Reference>

@@ -11,6 +11,9 @@ namespace Instant_Gist
     /// </summary>
     internal sealed class GistMenu
     {
+        //private string ID = "";
+        //private string OAuthUrl = "https://github.com/login/oauth/authorize?client_id=" + ID + "&scopes=gist"; // Ask user for permission to read and write gists
+
         /// <summary>
         /// Command ID.
         /// </summary>
@@ -73,13 +76,7 @@ namespace Instant_Gist
         /// <summary>
         /// Gets the service provider from the owner package.
         /// </summary>
-        private IServiceProvider ServiceProvider
-        {
-            get
-            {
-                return this.package;
-            }
-        }
+        private IServiceProvider ServiceProvider => this.package;
 
         /// <summary>
         /// Initializes the singleton instance of the command.
@@ -99,17 +96,8 @@ namespace Instant_Gist
         /// <param name="e">Event args.</param>
         private void MenuItemCallback(object sender, EventArgs e)
         {
-            string message = "Replace this with a login window";
-            string title = "Github Gist";
-
-            // Show a message box to prove we were here
-            VsShellUtilities.ShowMessageBox(
-                this.ServiceProvider,
-                message,
-                title,
-                OLEMSGICON.OLEMSGICON_INFO,
-                OLEMSGBUTTON.OLEMSGBUTTON_OK,
-                OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+            GithubLogin auth = new GithubLogin();
+            auth.ShowModal();
         }
 
         private void On_PublicGistUpload_Clicked(object sender, EventArgs e)

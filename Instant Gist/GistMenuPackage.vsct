@@ -65,7 +65,7 @@
       <Button guid="guidGistMenuPackageCmdSet" id="GistSettings" priority="0x0100" type="Button">
         <Parent guid="guidGistMenuPackageCmdSet" id="MyMenuGroup"/>
         <Strings>
-          <ButtonText>Login settings</ButtonText>
+          <ButtonText>Authenticate user</ButtonText>
         </Strings>
       </Button>
       <Button guid="guidGistMenuPackageCmdSet" id="SendPublicGist" priority="0x0200" type="Button">
