@@ -1,8 +1,13 @@
 ﻿using System;
 using System.ComponentModel.Design;
 using System.Globalization;
+using System.IO;
+using System.Windows;
+using EnvDTE;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
+using Microsoft.VisualStudio.TextManager.Interop;
+using Octokit;
 
 namespace Instant_Gist
 {
@@ -11,6 +16,9 @@ namespace Instant_Gist
     /// </summary>
     internal sealed class GistMenu
     {
+        private bool anonymous = false;
+        private GitHubClient client = new GitHubClient(new ProductHeaderValue("Instant-Gist"));
+        private Credentials login;
         //private string ID = "";
         //private string OAuthUrl = "https://github.com/login/oauth/authorize?client_id=" + ID + "&scopes=gist"; // Ask user for permission to read and write gists
 
@@ -88,9 +96,7 @@ namespace Instant_Gist
         }
 
         /// <summary>
-        /// This function is the callback used to execute the command when the menu item is clicked.
-        /// See the constructor to see how the menu item is associated with this function using
-        /// OleMenuCommandService service and MenuCommand class.
+        /// Opens a menu where you enter your personal auth token
         /// </summary>
         /// <param name="sender">Event sender.</param>
         /// <param name="e">Event args.</param>
@@ -100,33 +106,148 @@ namespace Instant_Gist
             auth.ShowModal();
         }
 
-        private void On_PublicGistUpload_Clicked(object sender, EventArgs e)
+        private async void On_PublicGistUpload_Clicked(object sender, EventArgs e)
         {
-            string message = "Replace this with an upload function";
-            string title = "Github Gist";
+            const string tokenFile = "token.txt";
 
-            // Show a message box to prove we were here
-            VsShellUtilities.ShowMessageBox(
+            if (login == null)
+            {
+                StreamReader reader = new StreamReader(tokenFile);
+                if (File.Exists(tokenFile))
+                {
+                    var token = reader.ReadLine();
+                    login = new Credentials(token);
+                    client.Credentials = login;
+                }
+                else
+                    anonymous = true;
+            }
+
+            if (anonymous == false)
+            {
+                //OleMenuCommandService commandService = this.ServiceProvider.GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
+                try
+                {
+                    var editor = this.ServiceProvider.GetService(typeof (SDTE)) as DTE;
+                    EnvDTE.TextSelection selection = editor.ActiveDocument.Selection as EnvDTE.TextSelection;
+                    if (selection != null)
+                    {
+                        var text = selection.Text;
+                        NewGist gist = new NewGist
+                        {
+                            Description = "Instant Gist automatic description.",
+                            Public = true
+                        };
+                        gist.Files.Add(DateTime.Now.ToString("F"), text);
+                        Gist toUpload = await client.Gist.Create(gist);
+                        Clipboard.SetText(toUpload.HtmlUrl);
+
+                        VsShellUtilities.ShowMessageBox(
+                        this.ServiceProvider,
+                        "Gist has been successfully uploaded and the link has been copied to the clipboard.\n(This will be replaced by a non-intrusive tooltip.)",
+                        "Success",
+                        OLEMSGICON.OLEMSGICON_INFO,
+                        OLEMSGBUTTON.OLEMSGBUTTON_OK,
+                        OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+                    }
+                }
+                catch (Exception exception)
+                {
+                    VsShellUtilities.ShowMessageBox(
+                        this.ServiceProvider,
+                        "No text might have been selected \nStack Trace\n" + exception.ToString(),
+                        "Error",
+                        OLEMSGICON.OLEMSGICON_INFO,
+                        OLEMSGBUTTON.OLEMSGBUTTON_OK,
+                        OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+                }
+            }
+            else //anonymous == true
+            {
+                VsShellUtilities.ShowMessageBox(
                 this.ServiceProvider,
-                message,
-                title,
+                "Anonymous uploads not yet implemented",
+                "Error",
                 OLEMSGICON.OLEMSGICON_INFO,
                 OLEMSGBUTTON.OLEMSGBUTTON_OK,
                 OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
-        }
-        private void On_PrivateGistUpload_Clicked(object sender, EventArgs e)
-        {
-            string message = "Replace this with an upload function";
-            string title = "Github Gist";
+            }
 
-            // Show a message box to prove we were here
-            VsShellUtilities.ShowMessageBox(
+        }
+        /// <summary>
+        /// Copy pasted function
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private async void On_PrivateGistUpload_Clicked(object sender, EventArgs e)
+        {
+            const string tokenFile = "token.txt";
+
+            if (login == null)
+            {
+                StreamReader reader = new StreamReader(tokenFile);
+                if (File.Exists(tokenFile))
+                {
+                    var token = reader.ReadLine();
+                    login = new Credentials(token);
+                    client.Credentials = login;
+                }
+                else
+                    anonymous = true;
+            }
+
+            if (anonymous == false)
+            {
+                //OleMenuCommandService commandService = this.ServiceProvider.GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
+                try
+                {
+                    var editor = this.ServiceProvider.GetService(typeof(SDTE)) as DTE;
+                    EnvDTE.TextSelection selection = editor.ActiveDocument.Selection as EnvDTE.TextSelection;
+                    if (selection != null)
+                    {
+                        var text = selection.Text;
+                        NewGist gist = new NewGist
+                        {
+                            Description = "Instant Gist automatic description.",
+                            Public = false
+                        };
+                        gist.Files.Add(DateTime.Now.ToString("F"), text);
+                        Gist toUpload = await client.Gist.Create(gist);
+                        Clipboard.SetText(toUpload.HtmlUrl);
+
+                        VsShellUtilities.ShowMessageBox(
+                        this.ServiceProvider,
+                        "Gist has been successfully uploaded and the link has been copied to the clipboard.\n(This will be replaced by a non-intrusive tooltip.)",
+                        "Success",
+                        OLEMSGICON.OLEMSGICON_INFO,
+                        OLEMSGBUTTON.OLEMSGBUTTON_OK,
+                        OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+                    }
+                }
+                catch (Exception exception)
+                {
+                    VsShellUtilities.ShowMessageBox(
+                        this.ServiceProvider,
+                        "No text might have been selected \nStack Trace\n" + exception.ToString(),
+                        "Error",
+                        OLEMSGICON.OLEMSGICON_INFO,
+                        OLEMSGBUTTON.OLEMSGBUTTON_OK,
+                        OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+                }
+            }
+            else //anonymous == true
+            {
+                VsShellUtilities.ShowMessageBox(
                 this.ServiceProvider,
-                message,
-                title,
+                "Anonymous uploads not yet implemented",
+                "Error",
                 OLEMSGICON.OLEMSGICON_INFO,
                 OLEMSGBUTTON.OLEMSGBUTTON_OK,
                 OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+            }
         }
+        //TODO: create a generic upload function and have anonymous as one parameter
+
     }
+
 }
