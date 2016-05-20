@@ -2,7 +2,11 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.IO;
+using Instant_Gist;
 using Microsoft.VisualStudio.PlatformUI;
+using Octokit;
+using Octokit.Internal;
+using Octokit.Helpers;
 
 namespace Instant_Gist
 {
@@ -19,7 +23,7 @@ namespace Instant_Gist
 
         private void Button1_Click(object sender, RoutedEventArgs e)
         {
-            if (this.textBox.Text.Length != 40)
+            if (this.textBox.Text.Length == 0)
             {
                 textBox.Text = "Enter a valid token.";
             }
