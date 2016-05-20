@@ -130,18 +130,26 @@ namespace Instant_Gist
                 {
                     var editor = this.ServiceProvider.GetService(typeof (SDTE)) as DTE;
                     EnvDTE.TextSelection selection = editor.ActiveDocument.Selection as EnvDTE.TextSelection;
+                    
                     if (selection != null)
                     {
                         var text = selection.Text;
                         NewGist gist = new NewGist
                         {
-                            Description = "Instant Gist automatic description.",
+                            Description = "Instant Gist upload.",
                             Public = true
                         };
-                        gist.Files.Add(DateTime.Now.ToString("F"), text);
+                        // Get's the file extension with regards to files that have a period in them.
+                        var fileName = editor.ActiveDocument.FullName;
+                        var arr = fileName.Split('\\');
+                        arr = arr[arr.Length - 1].Split('.');
+                        var extension = arr[arr.Length - 1];
+                        // Create and upload the gist
+                        gist.Files.Add(DateTime.Now.ToString("F") + "." + extension, text);
                         Gist toUpload = await client.Gist.Create(gist);
                         Clipboard.SetText(toUpload.HtmlUrl);
 
+                        //Finished
                         VsShellUtilities.ShowMessageBox(
                         this.ServiceProvider,
                         "Gist has been successfully uploaded and the link has been copied to the clipboard.\n(This will be replaced by a non-intrusive tooltip.)",
@@ -203,18 +211,26 @@ namespace Instant_Gist
                 {
                     var editor = this.ServiceProvider.GetService(typeof(SDTE)) as DTE;
                     EnvDTE.TextSelection selection = editor.ActiveDocument.Selection as EnvDTE.TextSelection;
+
                     if (selection != null)
                     {
                         var text = selection.Text;
                         NewGist gist = new NewGist
                         {
-                            Description = "Instant Gist automatic description.",
+                            Description = "Instant Gist upload.",
                             Public = false
                         };
-                        gist.Files.Add(DateTime.Now.ToString("F"), text);
+                        // Get's the file extension with regards to files that have a period in them.
+                        var fileName = editor.ActiveDocument.FullName;
+                        var arr = fileName.Split('\\');
+                        arr = arr[arr.Length - 1].Split('.');
+                        var extension = arr[arr.Length - 1];
+                        // Create and upload the gist
+                        gist.Files.Add(DateTime.Now.ToString("F") + "." + extension, text);
                         Gist toUpload = await client.Gist.Create(gist);
                         Clipboard.SetText(toUpload.HtmlUrl);
 
+                        //Finished
                         VsShellUtilities.ShowMessageBox(
                         this.ServiceProvider,
                         "Gist has been successfully uploaded and the link has been copied to the clipboard.\n(This will be replaced by a non-intrusive tooltip.)",
