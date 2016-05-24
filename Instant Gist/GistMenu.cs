@@ -16,15 +16,10 @@ namespace Instant_Gist
     /// </summary>
     internal sealed class GistMenu
     {
-        private bool anonymous = false;
-        private GitHubClient client = new GitHubClient(new ProductHeaderValue("Instant-Gist"));
-        private Credentials login;
-        //private string ID = "";
-        //private string OAuthUrl = "https://github.com/login/oauth/authorize?client_id=" + ID + "&scopes=gist"; // Ask user for permission to read and write gists
+        private const string TokenFile = "token.txt";
+        private readonly GitHubClient _client = new GitHubClient(new ProductHeaderValue("Instant-Gist"));
+        private Credentials _login;
 
-        /// <summary>
-        /// Command ID.
-        /// </summary>
         public const int CommandId = 0x0100;
 
         public const int PublicGist = 0x0200;
@@ -49,19 +44,14 @@ namespace Instant_Gist
         private GistMenu(Package package)
         {
             if (package == null)
-            {
                 throw new ArgumentNullException("package");
-            }
-
             this.package = package;
-
             OleMenuCommandService commandService = this.ServiceProvider.GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
             if (commandService != null)
             {
                 var menuCommandID = new CommandID(CommandSet, CommandId);
                 var publicGistUpload = new CommandID(CommandSet, PublicGist);
                 var privateGistUpload = new CommandID(CommandSet, PrivateGist);
-
                 var menuItem = new MenuCommand(this.MenuItemCallback, menuCommandID);
                 var publicGistUploadItem = new MenuCommand(this.On_PublicGistUpload_Clicked, publicGistUpload);
                 var privateGistUploadItem = new MenuCommand(this.On_PrivateGistUpload_Clicked, privateGistUpload);
@@ -102,143 +92,120 @@ namespace Instant_Gist
         /// <param name="e">Event args.</param>
         private void MenuItemCallback(object sender, EventArgs e)
         {
-            GithubLogin auth = new GithubLogin();
+            var auth = new GithubLogin();
             auth.ShowModal();
         }
-
-        private async void On_PublicGistUpload_Clicked(object sender, EventArgs e)
+        /// <summary>
+        /// Handler for button
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void On_PublicGistUpload_Clicked(object sender, EventArgs e)
         {
-            const string tokenFile = "token.txt";
-
-            if (login == null)
-            {
-                StreamReader reader = new StreamReader(tokenFile);
-                if (File.Exists(tokenFile))
-                {
-                    var token = reader.ReadLine();
-                    login = new Credentials(token);
-                    client.Credentials = login;
-                }
-                else
-                    anonymous = true;
-            }
-
-            if (anonymous == false)
-            {
-                //OleMenuCommandService commandService = this.ServiceProvider.GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
-                try
-                {
-                    var editor = this.ServiceProvider.GetService(typeof (SDTE)) as DTE;
-                    EnvDTE.TextSelection selection = editor.ActiveDocument.Selection as EnvDTE.TextSelection;
-                    
-                    if (selection != null)
-                    {
-                        var text = selection.Text;
-                        NewGist gist = new NewGist
-                        {
-                            Description = "Instant Gist upload.",
-                            Public = true
-                        };
-                        // Get's the file extension with regards to files that have a period in them.
-                        var fileName = editor.ActiveDocument.FullName;
-                        var arr = fileName.Split('\\');
-                        arr = arr[arr.Length - 1].Split('.');
-                        var extension = arr[arr.Length - 1];
-                        // Create and upload the gist
-                        gist.Files.Add(DateTime.Now.ToString("F") + "." + extension, text);
-                        Gist toUpload = await client.Gist.Create(gist);
-                        Clipboard.SetText(toUpload.HtmlUrl);
-
-                        //Finished
-                        VsShellUtilities.ShowMessageBox(
-                        this.ServiceProvider,
-                        "Gist has been successfully uploaded and the link has been copied to the clipboard.\n(This will be replaced by a non-intrusive tooltip.)",
-                        "Success",
-                        OLEMSGICON.OLEMSGICON_INFO,
-                        OLEMSGBUTTON.OLEMSGBUTTON_OK,
-                        OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
-                    }
-                }
-                catch (Exception exception)
-                {
-                    VsShellUtilities.ShowMessageBox(
-                        this.ServiceProvider,
-                        "No text might have been selected \nStack Trace\n" + exception.ToString(),
-                        "Error",
-                        OLEMSGICON.OLEMSGICON_INFO,
-                        OLEMSGBUTTON.OLEMSGBUTTON_OK,
-                        OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
-                }
-            }
-            else //anonymous == true
-            {
-                VsShellUtilities.ShowMessageBox(
-                this.ServiceProvider,
-                "Anonymous uploads not yet implemented",
-                "Error",
-                OLEMSGICON.OLEMSGICON_INFO,
-                OLEMSGBUTTON.OLEMSGBUTTON_OK,
-                OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
-            }
-
+            if (_login == null)
+                UploadGist(true, TryLogin());
         }
         /// <summary>
         /// Copy pasted function
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private async void On_PrivateGistUpload_Clicked(object sender, EventArgs e)
+        private void On_PrivateGistUpload_Clicked(object sender, EventArgs e)
         {
-            const string tokenFile = "token.txt";
-
-            if (login == null)
+            if (_login == null)
+                UploadGist(false, TryLogin());
+        }
+        /// <summary>
+        /// Checks whether the program can log in with the selected token and logs in.
+        /// </summary>
+        /// <returns></returns>
+        private bool TryLogin()
+        {
+            try
             {
-                StreamReader reader = new StreamReader(tokenFile);
-                if (File.Exists(tokenFile))
-                {
-                    var token = reader.ReadLine();
-                    login = new Credentials(token);
-                    client.Credentials = login;
-                }
-                else
-                    anonymous = true;
+                var reader = new StreamReader(TokenFile);
+                if (!File.Exists(TokenFile)) return false;
+                var token = reader.ReadLine();
+                _login = new Credentials(token);
+                _client.Credentials = _login;
+                return true;
             }
-
-            if (anonymous == false)
+            catch (Exception)
             {
-                //OleMenuCommandService commandService = this.ServiceProvider.GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
+                // If there's an error with the login
+                return false;
+            }
+        }
+        /// <summary>
+        /// Gets the selected text of the most recently selected editor window.
+        /// </summary>
+        /// <returns></returns>
+        private string GetSelectedText()
+        {
+            try
+            {
+                var editor = ServiceProvider.GetService(typeof(SDTE)) as DTE;
+                var selection = editor?.ActiveDocument.Selection as TextSelection;
+                return selection == null ? "" : selection.Text;
+            }
+            catch (Exception)
+            {
+                return "";
+            }
+        }
+        /// <summary>
+        /// Gets the extension of the file in the currently active editor.
+        /// </summary>
+        /// <returns>Extension of file as string (no '.').</returns>
+        private string GetExtension()
+        {
+            var editor = ServiceProvider.GetService(typeof(SDTE)) as DTE;
+            if (editor == null) return "";
+            var fileName = editor.ActiveDocument.FullName;
+            var arr = fileName.Split('\\');
+            arr = arr[arr.Length - 1].Split('.');
+            var extension = arr[arr.Length - 1];
+            return extension;
+        }
+
+        /// <summary>
+        /// Upload a gist to GitHub using the selected text
+        /// </summary>
+        /// <param name="_public">Whether or not the gist is public</param>
+        /// <param name="loggedIn">Whether or not the gist in loggedIn</param>
+        public async void UploadGist(bool _public, bool loggedIn)
+        {
+            if (loggedIn)
+            {
                 try
                 {
-                    var editor = this.ServiceProvider.GetService(typeof(SDTE)) as DTE;
-                    EnvDTE.TextSelection selection = editor.ActiveDocument.Selection as EnvDTE.TextSelection;
-
-                    if (selection != null)
+                    // Get the selected text
+                    var text = GetSelectedText();
+                    // If there is no text throw an error
+                    if (text.Equals("")) throw new Exception();
+                    // Create a new gist object that represents the gist to upload
+                    var gist = new NewGist
                     {
-                        var text = selection.Text;
-                        NewGist gist = new NewGist
-                        {
-                            Description = "Instant Gist upload.",
-                            Public = false
-                        };
-                        // Get's the file extension with regards to files that have a period in them.
-                        var fileName = editor.ActiveDocument.FullName;
-                        var arr = fileName.Split('\\');
-                        arr = arr[arr.Length - 1].Split('.');
-                        var extension = arr[arr.Length - 1];
-                        // Create and upload the gist
-                        gist.Files.Add(DateTime.Now.ToString("F") + "." + extension, text);
-                        Gist toUpload = await client.Gist.Create(gist);
-                        Clipboard.SetText(toUpload.HtmlUrl);
+                        Description = "Instant Gist upload.",
+                        Public = _public
+                    };
+                    // Get the file extension
+                    var extension = GetExtension();
+                    // Create a name for the upload
+                    var fileName = DateTime.Now.ToString("F");
+                    // Create and upload the gist
+                    gist.Files.Add(fileName + "." + extension, text);
+                    var upload = await _client.Gist.Create(gist);
+                    Clipboard.SetText(upload.HtmlUrl);
 
-                        //Finished
-                        VsShellUtilities.ShowMessageBox(
+                    // Finished
+                    VsShellUtilities.ShowMessageBox(
                         this.ServiceProvider,
                         "Gist has been successfully uploaded and the link has been copied to the clipboard.\n(This will be replaced by a non-intrusive tooltip.)",
                         "Success",
                         OLEMSGICON.OLEMSGICON_INFO,
                         OLEMSGBUTTON.OLEMSGBUTTON_OK,
                         OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
-                    }
                 }
                 catch (Exception exception)
                 {
@@ -251,7 +218,7 @@ namespace Instant_Gist
                         OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
                 }
             }
-            else //anonymous == true
+            else //loggedIn == false
             {
                 VsShellUtilities.ShowMessageBox(
                 this.ServiceProvider,
@@ -262,8 +229,6 @@ namespace Instant_Gist
                 OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
             }
         }
-        //TODO: create a generic upload function and have anonymous as one parameter
-
     }
 
 }
