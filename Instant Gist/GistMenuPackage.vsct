@@ -43,7 +43,7 @@
     
     <Menus>
       <Menu guid="guidGistMenuPackageCmdSet" id="GistMenu" priority="0x700" type="Menu">
-        <Parent guid="guidSHLMainMenu" id="IDG_VS_MM_TOOLSADDINS"/>
+        <Parent guid="guidSHLMainMenu" id="IDG_VS_CODEWIN_TEXTEDIT"/>
         <Strings>
           <ButtonText>Gist</ButtonText>
           <CommandName>Gist</CommandName>
