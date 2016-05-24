@@ -4,10 +4,16 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:platformUi="clr-namespace:Microsoft.VisualStudio.PlatformUI;assembly=Microsoft.VisualStudio.Shell.14.0"
-             mc:Ignorable="d" d:DesignWidth="300" Height="127.181">
-    <Grid Margin="0,0,0,-1">
-        <Button Content="OK" Height="41" HorizontalAlignment="Left" Margin="10,38,0,0" Name="Button1" VerticalAlignment="Top" Width="272" Click="Button1_Click" />
-        <TextBox x:Name="textBox" HorizontalAlignment="Left" Height="23" Margin="10,10,0,0" TextWrapping="Wrap" Text="Enter person token..." VerticalAlignment="Top" Width="280"/>
+             mc:Ignorable="d" Height="105.294" Width="348.482" ResizeMode="NoResize">
+    <Grid Margin="0,1,0,-3">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="97*"/>
+            <RowDefinition Height="6*"/>
+        </Grid.RowDefinitions>
+        <Button Content="OK" Margin="10,38,0,0" Name="Button1" Click="Button1_Click" HorizontalAlignment="Left" Width="70" Height="26" VerticalAlignment="Top" />
+        <TextBox x:Name="TextBox" Height="23" Margin="10,10,0,0" TextWrapping="Wrap" Text="Enter personal token..." VerticalAlignment="Top" HorizontalAlignment="Left" Width="322"/>
+        <Button x:Name="ClearButton" Content="Clear" HorizontalAlignment="Left" Margin="142,38,0,0" Click="clearButton_Click" VerticalAlignment="Top" Width="70" Height="26"/>
+        <Button x:Name="CancelButton" Content="Cancel" HorizontalAlignment="Left" Margin="261,38,0,0" VerticalAlignment="Top" Width="71" Height="26" Click="cancelButton_Click" IsCancel="True"/>
     </Grid>
 </platformUi:DialogWindow>
 

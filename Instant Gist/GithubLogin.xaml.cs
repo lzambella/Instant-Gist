@@ -1,12 +1,6 @@
-﻿using System.Globalization;
-using System.Windows;
-using System.Windows.Controls;
+﻿using System.Windows;
 using System.IO;
-using Instant_Gist;
 using Microsoft.VisualStudio.PlatformUI;
-using Octokit;
-using Octokit.Internal;
-using Octokit.Helpers;
 
 namespace Instant_Gist
 {
@@ -16,6 +10,8 @@ namespace Instant_Gist
     [ProvideToolboxControl("Instant_Gist.GithubLogin", true)]
     public partial class GithubLogin : DialogWindow
     {
+        private const string TokenFile = "Token.txt";
+        private bool _cleared = false;
         public GithubLogin()
         {
             InitializeComponent();
@@ -23,21 +19,54 @@ namespace Instant_Gist
 
         private void Button1_Click(object sender, RoutedEventArgs e)
         {
-            if (this.textBox.Text.Length == 0)
+            try
             {
-                textBox.Text = "Enter a valid token.";
+                if (TextBox.Text.Length != 40)
+                    TextBox.Text = "Enter a valid token.";
+                else if (TextBox.Text.Equals("Token successfully cleared."))
+                    Close();
+                else
+                {
+
+                    if (!File.Exists(TokenFile))
+                        File.Create(TokenFile);
+                    var fileWriter = new StreamWriter(TokenFile);
+                    var ID = this.TextBox.Text;
+                    fileWriter.WriteLine(ID);
+                    fileWriter.Close();
+                    Close();
+                }
             }
-            else
+            catch (System.Exception exception)
             {
-                var tokenFile = "Token.txt";
-                if (!File.Exists(tokenFile))
-                    File.Create(tokenFile);
-                var fileWriter = new StreamWriter(tokenFile);
-                string ID = this.textBox.Text;
-                fileWriter.WriteLine(ID);
-                fileWriter.Close();
-                this.Close();
+                TextBox.Text = "Error. " + exception;
             }
+        }
+
+        private void clearButton_Click(object sender, RoutedEventArgs e)
+        {
+            _cleared = false;
+            try
+            {
+                if (File.Exists(TokenFile))
+                {
+                    File.Delete(TokenFile);
+                    TextBox.Text = "Token successfully cleared.";
+                    _cleared = true;
+                }
+                else
+                    TextBox.Text = "Nothing to clear.";
+            }
+            catch (System.Exception exception)
+            {
+
+                TextBox.Text = "Error. " + exception.Message;
+            }
+        }
+
+        private void cancelButton_Click(object sender, RoutedEventArgs e)
+        {
+            Close();
         }
     }
 }
