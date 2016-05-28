@@ -16,6 +16,7 @@ namespace Instant_Gist
     /// </summary>
     internal sealed class GistMenu
     {
+        //Database database = new Database("history", ".");
         private const string TokenFile = "token.txt";
         private readonly GitHubClient _client = new GitHubClient(new ProductHeaderValue("Instant-Gist"));
         private Credentials _login;
@@ -102,8 +103,8 @@ namespace Instant_Gist
         /// <param name="e"></param>
         private void On_PublicGistUpload_Clicked(object sender, EventArgs e)
         {
-            if (_login == null)
-                UploadGist(true, TryLogin());
+            var loggedIn = TryLogin();
+            UploadGist(true, loggedIn);
         }
         /// <summary>
         /// Copy pasted function
@@ -112,8 +113,8 @@ namespace Instant_Gist
         /// <param name="e"></param>
         private void On_PrivateGistUpload_Clicked(object sender, EventArgs e)
         {
-            if (_login == null)
-                UploadGist(false, TryLogin());
+            var loggedIn = TryLogin();
+            UploadGist(false, loggedIn); // loggedIn is always true here
         }
         /// <summary>
         /// Checks whether the program can log in with the selected token and logs in.
@@ -175,59 +176,64 @@ namespace Instant_Gist
         /// <param name="loggedIn">Whether or not the gist in loggedIn</param>
         public async void UploadGist(bool _public, bool loggedIn)
         {
-            if (loggedIn)
+            try
             {
-                try
+                var confirmation = 0;
+                // Get the selected text
+                var text = GetSelectedText();
+                // If there is no text throw an error
+                if (text.Equals("")) throw new Exception();
+                // Create a new gist object that represents the gist to upload
+                var gist = new NewGist
                 {
-                    // Get the selected text
-                    var text = GetSelectedText();
-                    // If there is no text throw an error
-                    if (text.Equals("")) throw new Exception();
-                    // Create a new gist object that represents the gist to upload
-                    var gist = new NewGist
-                    {
-                        Description = "Instant Gist upload.",
-                        Public = _public
-                    };
-                    // Get the file extension
-                    var extension = GetExtension();
-                    // Create a name for the upload
-                    var fileName = DateTime.Now.ToString("F");
-                    // Create and upload the gist
-                    gist.Files.Add(fileName + "." + extension, text);
-                    var upload = await _client.Gist.Create(gist);
-                    Clipboard.SetText(upload.HtmlUrl);
+                    Description = "Instant Gist upload.",
+                    Public = true
+                };
+                // Get the file extension
+                var extension = GetExtension();
+                // Create a name for the upload
+                var fileName = DateTime.Now.ToString("F");
+                gist.Files.Add(fileName + "." + extension, text);
 
-                    // Finished
-                    VsShellUtilities.ShowMessageBox(
-                        this.ServiceProvider,
-                        "Gist has been successfully uploaded and the link has been copied to the clipboard.\n(This will be replaced by a non-intrusive tooltip.)",
-                        "Success",
-                        OLEMSGICON.OLEMSGICON_INFO,
-                        OLEMSGBUTTON.OLEMSGBUTTON_OK,
-                        OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
-                }
-                catch (Exception exception)
+                if (!loggedIn)
                 {
-                    VsShellUtilities.ShowMessageBox(
+                    confirmation = VsShellUtilities.ShowMessageBox(
+                        ServiceProvider,
+                        "Anonymous uploads can not easily be deleted. Really upload one?",
+                        "Warning.",
+                        OLEMSGICON.OLEMSGICON_CRITICAL,
+                        OLEMSGBUTTON.OLEMSGBUTTON_YESNO,
+                        OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+                }
+                if (confirmation == 7) return;
+                var upload = await _client.Gist.Create(gist);
+                Clipboard.SetText(upload.HtmlUrl);
+                var editor = ServiceProvider.GetService(typeof(SDTE)) as DTE;
+                var file = editor.ActiveDocument.FullName;
+                var arr = file.Split('\\');
+                //database.AddHistory(DateTime.Now, upload.HtmlUrl, arr[arr.Length - 1]);
+                QuickMessage("Done.", "Gist successfully uploaded and the address was sent to the clipboard.");
+            }
+            catch (Exception)
+            {
+                QuickMessage("Error.", " Exception occured.\nNo text might have been selected.");
+                throw;
+            }
+        }
+        /// <summary>
+        /// Simplified messagebox dialog
+        /// </summary>
+        /// <param name="header">header text</param>
+        /// <param name="text">body text</param>
+        public void QuickMessage(string header, string text)
+        {
+            VsShellUtilities.ShowMessageBox(
                         this.ServiceProvider,
-                        "No text might have been selected \nStack Trace\n" + exception.ToString(),
-                        "Error",
+                        text,
+                        header,
                         OLEMSGICON.OLEMSGICON_INFO,
                         OLEMSGBUTTON.OLEMSGBUTTON_OK,
                         OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
-                }
-            }
-            else //loggedIn == false
-            {
-                VsShellUtilities.ShowMessageBox(
-                this.ServiceProvider,
-                "Anonymous uploads not yet implemented",
-                "Error",
-                OLEMSGICON.OLEMSGICON_INFO,
-                OLEMSGBUTTON.OLEMSGBUTTON_OK,
-                OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
-            }
         }
     }
 
