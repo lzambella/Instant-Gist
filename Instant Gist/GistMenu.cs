@@ -194,7 +194,6 @@ namespace Instant_Gist
                 // Create a name for the upload
                 var fileName = DateTime.Now.ToString("F");
                 gist.Files.Add(fileName + "." + extension, text);
-
                 if (!loggedIn)
                 {
                     confirmation = VsShellUtilities.ShowMessageBox(
@@ -205,17 +204,18 @@ namespace Instant_Gist
                         OLEMSGBUTTON.OLEMSGBUTTON_YESNO,
                         OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
                 }
-                // ReSharper disable once InvertIf
-                if (confirmation != 7)
-                {
-                    var upload = await _client.Gist.Create(gist);
-                    Clipboard.SetText(upload.HtmlUrl);
-                    var editor = ServiceProvider.GetService(typeof (SDTE)) as DTE;
-                    var file = editor.ActiveDocument.FullName;
-                    var arr = file.Split('\\');
-                    //database.AddHistory(DateTime.Now, upload.HtmlUrl, arr[arr.Length - 1]);
-                    QuickMessage("Done.", "Gist successfully uploaded and the address was sent to the clipboard.");
-                }
+                if (confirmation == 7) return;
+                else if (confirmation == 0) return;
+                else if (confirmation == 2) return;
+                else if (confirmation == 3) return;
+                
+                var upload = await _client.Gist.Create(gist);
+                Clipboard.SetText(upload.HtmlUrl);
+                var editor = ServiceProvider.GetService(typeof (SDTE)) as DTE;
+                var file = editor.ActiveDocument.FullName;
+                var arr = file.Split('\\');
+                //database.AddHistory(DateTime.Now, upload.HtmlUrl, arr[arr.Length - 1]);
+                QuickMessage("Done.", "Gist successfully uploaded and the address was sent to the clipboard.");
             }
             catch (Exception)
             {
